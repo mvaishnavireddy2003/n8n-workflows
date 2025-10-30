@@ -1,0 +1,542 @@
+{
+  "name": "n8n workflow - SEO blog",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -208,
+        112
+      ],
+      "id": "87cf7592-ed2f-4b55-9eb6-600745cb8fcf",
+      "name": "Telegram Trigger",
+      "webhookId": "671f8864-d8bd-42c3-934a-53ddaf3b189c"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appTZ3If3rx5Adybd",
+          "mode": "list",
+          "cachedResultName": "Blog Agent",
+          "cachedResultUrl": "https://airtable.com/appTZ3If3rx5Adybd"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblETgoEKAy28baUE",
+          "mode": "list",
+          "cachedResultName": "Preferences",
+          "cachedResultUrl": "https://airtable.com/appTZ3If3rx5Adybd/tblETgoEKAy28baUE"
+        },
+        "returnAll": false,
+        "limit": 20,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "77c13bd3-86ef-4092-b789-d4cae4d162d4",
+      "name": "Preferences"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appTZ3If3rx5Adybd",
+          "mode": "list",
+          "cachedResultName": "Blog Agent",
+          "cachedResultUrl": "https://airtable.com/appTZ3If3rx5Adybd"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblvreVZiRgA8fsuQ",
+          "mode": "list",
+          "cachedResultName": "Keywords",
+          "cachedResultUrl": "https://airtable.com/appTZ3If3rx5Adybd/tblvreVZiRgA8fsuQ"
+        },
+        "returnAll": false,
+        "limit": 20,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        224
+      ],
+      "id": "fef6941b-8f00-459a-85a7-968abdfb4a81",
+      "name": "Keywords"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "Preferences",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "e1e678b0-1e0e-42a5-b1b8-f704248815f1",
+      "name": "Aggregate Preferences"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "Keywords",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        208,
+        224
+      ],
+      "id": "7e7122d4-a9d3-4fca-818c-d52ad920a403",
+      "name": "Aggregate Keywords"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        432,
+        64
+      ],
+      "id": "2de20765-b781-4872-976d-cfea152cef3b",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "options": {
+          "systemMessage": "=You are a blogging assistant. When the user sends a blog topic or keyword, immediately generate a complete blog post in HTML format. Do not ask for confirmation. Do not request clarification unless absolutely necessary.\n\nAlways output your response as a JSON object with two fields:\n\n{\n  \"title\": \"<Blog title here>\",\n  \"html\": \"<Complete blog content formatted in HTML>\"\n}\n\nGuidelines:\n- The blog must be SEO-optimized with heading tags (h1, h2, h3)\n- Write in a clear, engaging tone for a general audience\n- Include natural use of keywords (if provided)\n- Blog length: around 800–1000 words\n- Wrap the content with proper HTML structure (<h1>, <p>, <ul>, etc.)\n- Do NOT include markdown or plain text, only HTML inside the html field\n- Do NOT include image links unless specifically asked\n- Your entire response must be valid JSON (not a string)\n\nOutput ONLY the JSON block, nothing else.\n",
+          "maxIterations": 10
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        448,
+        272
+      ],
+      "id": "b3adc648-2cc9-4d2f-bde3-b4dac6646622",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        368,
+        480
+      ],
+      "id": "ae963914-b0c0-47d7-817f-33ddb9a0c577",
+      "name": "OpenAI Chat Model"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        480
+      ],
+      "id": "50433027-12e0-4df4-94a3-d413222db0f9",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appTZ3If3rx5Adybd",
+          "mode": "list",
+          "cachedResultName": "Blog Agent",
+          "cachedResultUrl": "https://airtable.com/appTZ3If3rx5Adybd"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblETgoEKAy28baUE",
+          "mode": "list",
+          "cachedResultName": "Preferences",
+          "cachedResultUrl": "https://airtable.com/appTZ3If3rx5Adybd/tblETgoEKAy28baUE"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Preference": "={{  $fromAI('add_preference') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Preference",
+              "displayName": "Preference",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        688,
+        480
+      ],
+      "id": "502add9a-d5c4-4aa1-b010-61b7e9f060c5",
+      "name": "add_preferences"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appTZ3If3rx5Adybd",
+          "mode": "list",
+          "cachedResultName": "Blog Agent",
+          "cachedResultUrl": "https://airtable.com/appTZ3If3rx5Adybd"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblvreVZiRgA8fsuQ",
+          "mode": "list",
+          "cachedResultName": "Keywords",
+          "cachedResultUrl": "https://airtable.com/appTZ3If3rx5Adybd/tblvreVZiRgA8fsuQ"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Keywords": "={{  $fromAI('add_keyword') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Keywords",
+              "displayName": "Keywords",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        832,
+        480
+      ],
+      "id": "31951fb1-8629-4d00-b090-6fa61c80b54c",
+      "name": "add_keyword"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=🎉 New Blog Posted!\n\n🖊️ **{{ $json[\"title\"] }}**\n\n🔗 [Read Now]({{ $json[\"url\"] }})\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1104,
+        272
+      ],
+      "id": "4b754c92-9afe-4fca-99a7-3bf5d9ddfa00",
+      "name": "Send a text message",
+      "webhookId": "b9f5832b-7782-4b05-b7de-7e028d45f20e"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/blogger/v3/blogs/3721126400079043456/posts/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $json[\"title\"] }}"
+            },
+            {
+              "name": "content",
+              "value": "={{ $json[\"html\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        928,
+        272
+      ],
+      "id": "b586c4b3-25d8-4cb3-b75f-456044cd05c7",
+      "name": "Publish to Blogger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6fe5acb1-8811-4935-a6d6-8b303bbc5afe",
+              "name": "title",
+              "value": "={{ JSON.parse($json[\"output\"]).title }}",
+              "type": "string"
+            },
+            {
+              "id": "307ab705-1c1d-4f4e-98d9-d96699e6688c",
+              "name": "html",
+              "value": "={{ JSON.parse($json[\"output\"]).html }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        752,
+        272
+      ],
+      "id": "4dbbe041-5777-4d85-8f12-6ba88da21252",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Keywords",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Preferences",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preferences": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Preferences",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keywords": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Preferences": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Keywords": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "add_preferences": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "add_keyword": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish to Blogger": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Publish to Blogger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d7a94ae0-fd3f-45e4-b627-57612c44cd09",
+  "meta": {
+    "instanceId": "0cf2ba36a157e69831faae76482a9574bc48af0ee330fcd70268c9821eb3d791"
+  },
+  "id": "4SyhBjzx2BS8K1bA",
+  "tags": [
+    {
+      "updatedAt": "2025-10-29T14:12:00.286Z",
+      "createdAt": "2025-10-29T14:12:00.286Z",
+      "id": "ikOmFsJzkyghFJ1I",
+      "name": "Vaishnavi"
+    }
+  ]
+}
